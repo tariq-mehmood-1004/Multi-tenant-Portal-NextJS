@@ -205,6 +205,7 @@ const Cart = () => {
                                         alt={item.name}
                                         width={50}
                                         height={50}
+                                        unoptimized
                                         className="rounded object-cover"
                                     />
                                     <div>

@@ -46,10 +46,12 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
 
     return (
         <div className={`
+            relative
             bg-white rounded-xl group overflow-hidden border-2 border-gray-100
             transition-all duration-300 ease-in-out
             ${isDimmed ? "blur-sm opacity-40" : "blur-0 opacity-100"}
             hover:!blur-0 hover:!opacity-100
+            w-[300px] h-[450px]
         `}>
 
             {/* Image Section */}
@@ -61,6 +63,7 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
                     alt={product.title || "Product image"}
                     width={500}
                     height={500}
+                    unoptimized
                     className="object-cover group-hover:scale-105 transition duration-300 ease-in-out group-hover:opacity-90"
                     priority
                 />
@@ -81,7 +84,7 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
             </div>
 
             {/* Content */}
-            <div className="p-4 flex flex-col gap-2">
+            <div className="p-4 flex flex-col gap-2 absolute bottom-0 w-full bg-white">
 
                 {/* Title */}
                 <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">
