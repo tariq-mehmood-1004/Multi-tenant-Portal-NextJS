@@ -1,0 +1,7 @@
+## Multi-tenant Portal
+
+```bash
+NEXT_PUBLIC_API_URL=
+NEXT_PUBLIC_TOKEN_KEY=
+NEXT_PUBLIC_SOCKET_BASE_URL=
+```
