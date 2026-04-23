@@ -34,6 +34,11 @@ const nextConfig: NextConfig = {
         hostname: 'multi-tenant.swiftnine.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'swiftnine-apps.s3.eu-north-1.amazonaws.com',
+        pathname: '/**',
+      },
     ],
   },
 };
