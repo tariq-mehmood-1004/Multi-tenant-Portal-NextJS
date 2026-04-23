@@ -84,7 +84,7 @@ const THeader = () => {
 
                     {/* Notifications */}
                     {notificationModalOpen && (
-                        <div className="w-[400px] h-[450px] bg-white shadow-xl border-2 rounded-xl absolute top-12 right-0">
+                        <div className="max-[767px]:w-[350px] w-[400px] h-[450px] bg-white shadow-xl border-2 rounded-xl absolute top-12 right-0">
                             <div className="relative border-b pb-3">
                                 <Button variant="ghost"
                                     onClick={() => setNotificationModalOpen(false)}
