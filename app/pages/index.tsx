@@ -61,10 +61,10 @@ export default function HomePage() {
     }
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen px-4">
 
             <div className="flex flex-col max-w-7xl mx-auto">
-                <div className="mb-6 flex gap-4">
+                <div className="mb-6 flex gap-4 max-[767px]:flex-col py-2">
                     <input
                         type="text"
                         placeholder="Filter by category"

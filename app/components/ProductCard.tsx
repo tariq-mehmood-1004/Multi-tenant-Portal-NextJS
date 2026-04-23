@@ -51,7 +51,7 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
             transition-all duration-300 ease-in-out
             ${isDimmed ? "blur-sm opacity-40" : "blur-0 opacity-100"}
             hover:!blur-0 hover:!opacity-100
-            w-[300px] h-[450px]
+            max-[767px]:w-full w-[300px] h-[450px]
         `}>
 
             {/* Image Section */}
@@ -207,7 +207,50 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
                     <>
                         <p className="text-xs text-gray-500">
                             Out of Stock
-                        </p>
+                            </p>
+                            
+                            <div className="flex gap-2 mt-3">
+                                <Button
+                                    isDisabled
+                                    onClick={() => {
+                                        if (!selectedSize) {
+                                            toast.error("Please select a size");
+                                            return;
+                                        }
+
+                                        const inventoryItem = product.inventory?.find(
+                                            i => i.sku === selectedSize
+                                        );
+
+                                        const available = inventoryItem
+                                            ? inventoryItem.quantity - inventoryItem.reserved
+                                            : 0;
+
+                                        if (available <= 0) {
+                                            toast.error("Out of stock for selected size");
+                                            return;
+                                        }
+
+                                        const productWithSize = {
+                                            ...product,
+                                            selectedSize,
+                                            sku: selectedSize
+                                        };
+
+                                        onAddToCart(productWithSize);
+                                    }}
+                                    className="flex-1 bg-black text-white text-sm py-2 rounded-md hover:bg-gray-800 transition">
+                                    Add to Cart
+                                </Button>
+
+                                <Button
+                                    isDisabled
+                                    onClick={handleCartRoute}
+                                    className="flex-1 text-center bg-transparent border border-black text-black text-sm py-2 rounded-md hover:bg-black hover:text-white transition"
+                                >
+                                    Check Out
+                                </Button>
+                            </div>
                     </>
                 )}
 
