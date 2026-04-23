@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
         hostname: 'cdn.example.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'multi-tenant.swiftnine.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'multi-tenant.swiftnine.com',
+        pathname: '/**',
+      },
     ],
   },
 };

@@ -23,10 +23,6 @@ export const ProductCard = ({ product, onAddToCart, isDimmed }: Props) => {
 
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
-    const getSku = (size: string) => {
-        return `${product.id}-${size}`;
-    };
-
     const activeInventory = product.inventory?.find(
         (inv) => inv.sku === selectedSize
     );
