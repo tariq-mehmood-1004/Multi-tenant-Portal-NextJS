@@ -83,15 +83,23 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
                     throw new Error("Invalid payment provider");
             }
 
-            const { data } = await axiosInstance.post(endpoint, payload);
+            console.log(`PAYLOAD:`, payload);
+
+            const { data, status } = await axiosInstance.post(endpoint, payload);
+            
+            console.log(`CHECKOUT DATA:`, data);
+            console.log(`CHECKOUT status:`, status);
 
             const url = data?.data?.metadata?.checkout_url;
 
             if (!url) throw new Error("Checkout URL missing");
 
-            window.location.href = url;
+            if (status === 200) {
+                toast.success(`You are being redirected to the checkout page on ${form.provider}...`);
 
-            clearCart();
+                window.location.href = url;
+                clearCart();
+            }
 
         } catch (err: any) {
             console.error(err.message || err);
