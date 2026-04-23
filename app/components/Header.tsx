@@ -84,7 +84,7 @@ const THeader = () => {
 
                     {/* Notifications */}
                     {notificationModalOpen && (
-                        <div className="max-[767px]:w-[350px] w-[400px] max-h-[480px] bg-white shadow-xl border-2 rounded-xl absolute top-12 right-0">
+                        <div className="max-[767px]:w-[350px] w-[400px] max-h-[480px] overflow-hidden bg-white shadow-xl border-2 rounded-xl absolute top-12 right-0">
                             <div className="relative border-b pb-3">
                                 <Button variant="ghost"
                                     onClick={() => setNotificationModalOpen(false)}
@@ -96,7 +96,7 @@ const THeader = () => {
                             </div>
 
                             <div className="mt-1">
-                                <ul className="max-h-[350px] overflow-y-scroll">
+                                <ul className="h-[380px] overflow-y-scroll">
                                     {notificationsData?.metadata.map((n, i) => (
                                         <li key={i} className="p-2 px-4 border-b hover:bg-gray-100 transition-all duration-300">
                                             <div className="flex flex-col gap-1">
