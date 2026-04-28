@@ -17,7 +17,6 @@ interface Item {
     productId: number;
     is_peptide: boolean;
     size?: string;
-
 }
 
 interface OrderResponse {
@@ -51,28 +50,44 @@ interface OrderResponse {
     };
 
     items: Item[];
-
     shipping: ShippingDetails;
     trackingId?: string;
 }
 
 export default function SuccessPage() {
     const searchParams = useSearchParams();
+
     const sessionId = searchParams.get("session_id");
+    const orderId = searchParams.get("orderId"); // PayPal
+    const orderNumber = searchParams.get("orderNumber"); // Ocean
 
     const [orderData, setOrderData] = useState<OrderResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!sessionId) return;
+        if (!sessionId && !orderId && !orderNumber) return;
 
         const verifyPayment = async () => {
             try {
-                const { data } = await axiosInstance.post("/payment/stripe/verify", {
-                    sessionId,
-                });
+                let res;
 
-                setOrderData(data.data);
+                if (orderNumber) {
+                    res = await axiosInstance.post("/payment/oceanpay/verify", {
+                        orderNumber,
+                    });
+                } else if (orderId) {
+                    res = await axiosInstance.post("/payment/paypal/verify", {
+                        orderId,
+                    });
+                } else if (sessionId) {
+                    res = await axiosInstance.post("/payment/stripe/verify", {
+                        sessionId,
+                    });
+                } else {
+                    throw new Error("Missing identifiers");
+                }
+
+                setOrderData(res.data.data);
             } catch (err) {
                 console.error(err);
                 toast.error("Payment verification failed");
@@ -82,7 +97,7 @@ export default function SuccessPage() {
         };
 
         verifyPayment();
-    }, [sessionId]);
+    }, [sessionId, orderId, orderNumber]);
 
     if (loading) {
         return (
@@ -120,11 +135,7 @@ export default function SuccessPage() {
 
     return (
         <div className="flex justify-center items-center text-black">
-            
             <div className="border rounded-lg w-full max-w-3xl p-6">
-
-                    
-                {/* HEADER */}
                 <div className="text-center border-b mb-8 pb-4">
                     <h1 className="text-2xl font-bold">Receipt</h1>
                     <p className="text-gray-600 text-sm">
@@ -132,26 +143,25 @@ export default function SuccessPage() {
                     </p>
                 </div>
 
-                {/* Payment status */}
                 <div className="flex justify-between gap-4 font-bold mb-4 text-sm">
                     <span>Payment Status</span>
                     <span className="flex items-center gap-2 text-gray-600">
-                        {session.payment_status}
+                        {session?.payment_status || "N/A"}
                     </span>
                 </div>
 
-                {/* ORDER INFO */}
                 <div className="mb-4 text-sm">
-                    <p><b>Order ID:</b> {order.id || "N/A"}</p>
+                    <p><b>Order ID:</b> {order?.id || "N/A"}</p>
                     <p><b>Tracking ID:</b> {trackingId || "N/A"}</p>
-                    <p><b>Email:</b> {order.customerEmail || "N/A"}</p>
+                    <p><b>Email:</b> {order?.customerEmail || "N/A"}</p>
                     <p>
                         <b>Date:</b>{" "}
-                        {new Date(order.createdAt).toLocaleString()}
+                        {order?.createdAt
+                            ? new Date(order.createdAt).toLocaleString()
+                            : "N/A"}
                     </p>
                 </div>
 
-                {/* ITEMS TABLE */}
                 <table className="w-full text-sm border-t border-b">
                     <thead>
                         <tr className="border-b">
@@ -164,7 +174,7 @@ export default function SuccessPage() {
                     </thead>
 
                     <tbody>
-                        {items.map((item, idx) => (
+                        {items?.map((item, idx) => (
                             <tr key={idx} className="border-b">
                                 <td className="py-2 flex items-center gap-3">
                                     {item.images?.[0] && (
@@ -183,7 +193,7 @@ export default function SuccessPage() {
                                     <span className={`
                                         text-center rounded-full py-1 px-3
                                         ${item.is_peptide ? 'bg-red-500 text-white' : 'text-black'}
-                                        `}>
+                                    `}>
                                         {item.is_peptide ? "Yes" : "No"}
                                     </span>
                                 </td>
@@ -207,7 +217,6 @@ export default function SuccessPage() {
                     </tbody>
                 </table>
 
-                {/* TOTAL */}
                 <div className="bg-zinc-200">
                     <div className="flex justify-between font-bold mt-4 py-2">
                         <span>Total</span>
@@ -220,20 +229,31 @@ export default function SuccessPage() {
                     </div>
                 </div>
 
-                {/* CUSTOMER */}
                 <div className="rounded mt-4 text-sm">
                     <h2 className="text-lg font-bold mb-2">Shipping details:</h2>
-                    <p><b>Phone:</b> {shipping.phone}</p>
-                    <p><b>Name:</b> {shipping.name}</p>
-                    <p><b>City:</b> {shipping.address.city}</p>
-                    <p><b>Country:</b> {shipping.address.country}</p>
-                    <p><b>Address:</b> {shipping.address.line1}</p>
-                    {shipping.address.line2 && (
+                    <p><b>Phone:</b> {shipping?.phone || "N/A"}</p>
+                    <p><b>Name:</b> {shipping?.name || "N/A"}</p>
+                    <p><b>City:</b> {shipping?.address?.city || "N/A"}</p>
+                    <p><b>Country:</b> {shipping?.address?.country || "N/A"}</p>
+                    <p><b>Address:</b> {shipping?.address?.line1 || "N/A"}</p>
+                    {shipping?.address?.line2 && (
                         <p><b>Address 2:</b> {shipping.address.line2}</p>
                     )}
-                    <p><b>Postal:</b> {shipping.address.postal_code}</p>
-                    <p><b>State:</b> {shipping.address.state}</p>
-                    <p><b>Country:</b> {shipping.address.country}</p>
+                    <p><b>Postal:</b> {shipping?.address?.postal_code || "N/A"}</p>
+                    <p><b>State:</b> {shipping?.address?.state || "N/A"}</p>
+                </div>
+
+                <hr className="my-4" />
+
+                <div className="flex justify-between font-bold mt-4 py-2 text-sm">
+                    <span>Payment Method</span>
+                    <span>
+                        {orderNumber
+                            ? "Ocean Payment"
+                            : orderId
+                                ? "PayPal"
+                                : "Stripe"}
+                    </span>
                 </div>
             </div>
         </div>

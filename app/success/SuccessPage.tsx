@@ -13,34 +13,28 @@ interface LineItem {
     currency: string;
 }
 
+interface Shipping {
+    name: string;
+    phone: string;
+    address: {
+        line1: string;
+        line2: string;
+        city: string;
+        state: string;
+        postal_code: string;
+        country: string;
+    };
+}
+
 interface OrderData {
-    session: {
-        line_items: { data: LineItem[] };
-        amount_total: number;
-        currency: string;
-        customer_details: {
-            address: {
-                city: string;
-                country: string;
-                line1: string;
-                line2: string;
-                postal_code: string;
-                state: string;
-            }
-        }
-    };
-    order: {
-        id: number;
-        status: string;
-        amount: number;
-        currency: string;
-        customerEmail: string | null;
-        createdAt: string;
-    };
+    session: any;
+    order: any;
+    shipping: Shipping;
 }
 
 export default function SuccessPage() {
     const searchParams = useSearchParams();
+
     const sessionId = searchParams.get("session_id");
     const orderNumber = searchParams.get("orderNumber");
     const token = searchParams.get("token");
@@ -51,22 +45,17 @@ export default function SuccessPage() {
     useEffect(() => {
         const verifyPayment = async () => {
             try {
-                let data;
+                let res;
 
                 if (orderNumber) {
-                    const res = await axiosInstance.post("/payment/oceanpay/verify", { orderNumber });
-                    data = res.data;
+                    res = await axiosInstance.post("/payment/oceanpay/verify", { orderNumber });
                 } else if (sessionId) {
-                    const res = await axiosInstance.post("/payment/stripe/verify", { sessionId });
-                    data = res.data;
+                    res = await axiosInstance.post("/payment/stripe/verify", { sessionId });
                 } else if (token) {
-                    const res = await axiosInstance.post("/payment/paypal/verify", { orderId: token });
-                    data = res.data;
+                    res = await axiosInstance.post("/payment/paypal/verify", { orderId: token });
                 }
 
-                console.log(`DATA:`, data);
-
-                setOrderData(data.data);
+                setOrderData(res?.data?.data);
             } catch (err: any) {
                 console.error(err);
                 toast.error("Payment verification failed");
@@ -95,14 +84,27 @@ export default function SuccessPage() {
         );
     }
 
-    const { session, order } = orderData;
-    console.log(JSON.stringify(order));
+    console.log({
+        orderData
+    })
+
+    const { session, order, shipping } = orderData;
+
+    const receiptQuery =
+        orderNumber
+            ? `orderNumber=${orderNumber}`
+            : token
+                ? `orderId=${token}`
+                : `session_id=${sessionId}`;
 
     return (
         <div className="flex flex-col justify-center items-center text-black">
             <div className="border rounded-lg p-6 w-full max-w-xl">
-                <h1 className="text-2xl font-bold mb-2 text-green-600 text-center">Payment Successful!</h1>
-                <p className="text-gray-700 mb-4  text-center">
+                <h1 className="text-2xl font-bold mb-2 text-green-600 text-center">
+                    Payment Successful!
+                </h1>
+
+                <p className="text-gray-700 mb-4 text-center">
                     Thank you, your order has been processed.
                 </p>
 
@@ -115,18 +117,23 @@ export default function SuccessPage() {
 
                 <div className="bg-zinc-200 px-3 py-2 rounded-lg">
                     <h2 className="font-semibold mb-2">Customer Details</h2>
-                    <p><span className="font-semibold">Email: </span>{order.customerEmail}</p>
-                    <p><span className="font-semibold">City: </span>{session.customer_details.address.city || "N/A"}</p>
-                    <p><span className="font-semibold">Country: </span>{session.customer_details.address.country || "N/A"}</p>
-                    <p><span className="font-semibold">Address Line 1: </span>{session.customer_details.address.line1 || "N/A"}</p>
-                    <p><span className="font-semibold">Address Line 2: </span>{session.customer_details.address.line2 || "N/A"}</p>
-                    <p><span className="font-semibold">Postal Code: </span>{session.customer_details.address.postal_code || "N/A"}</p>
-                    <p><span className="font-semibold">State: </span>{session.customer_details.address.state || "N/A"}</p>
+                    <p><span className="font-semibold">Email: </span>{order.customerEmail || shipping.name}</p>
+                    <p><span className="font-semibold">City: </span>{session?.customer_details?.address?.city || shipping.address.city || "N/A"}</p>
+                    <p><span className="font-semibold">Country: </span>{session?.customer_details?.address?.country || shipping.address.country || "N/A"}</p>
+                    <p><span className="font-semibold">Address Line 1: </span>{session?.customer_details?.address?.line1 || shipping.address.line1 || "N/A"}</p>
+                    <p><span className="font-semibold">Address Line 2: </span>{session?.customer_details?.address?.line2 || shipping.address.line2 || "N/A"}</p>
+                    <p><span className="font-semibold">Postal Code: </span>{session?.customer_details?.address?.postal_code || shipping.address.postal_code || "N/A"}</p>
+                    <p><span className="font-semibold">State: </span>{session?.customer_details?.address?.state || shipping.address.state || "N/A"}</p>
                 </div>
 
                 <div className="flex justify-between items-center mt-4 pt-2 border-t border-gray-200 font-semibold text-lg">
                     <span>Total:</span>
-                    <span>{(order.amount).toLocaleString(undefined, { style: 'currency', currency: session.currency.toUpperCase() })}</span>
+                    <span>
+                        {order.amount.toLocaleString(undefined, {
+                            style: "currency",
+                            currency: session.currency.toUpperCase(),
+                        })}
+                    </span>
                 </div>
 
                 <div className="mt-6 flex items-center gap-4 justify-between">
@@ -138,7 +145,7 @@ export default function SuccessPage() {
                     </Link>
 
                     <Link
-                        href={`/receipt?session_id=${sessionId}`}
+                        href={`/receipt?${receiptQuery}`}
                         target="_blank"
                         className="px-3 block text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors"
                     >

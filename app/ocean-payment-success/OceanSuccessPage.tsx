@@ -222,6 +222,17 @@ export default function OceanSuccessPage() {
                     <p><b>Postal Code:</b> {shipping.address.postal_code}</p>
                 </div>
 
+                <hr className="my-4" />
+
+                <div className="flex justify-between font-bold mt-4 py-2 text-sm">
+                    <span>Payment Method</span>
+                    <span>
+                        {orderNumber
+                            ? "Ocean Payment"
+                            : "None"}
+                    </span>
+                </div>
+
                 {/* ACTIONS (same layout style as Stripe page) */}
                 <div className="mt-6 flex justify-between">
                     <Link
