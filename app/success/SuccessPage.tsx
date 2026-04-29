@@ -49,16 +49,22 @@ export default function SuccessPage() {
 
                 if (orderNumber) {
                     res = await axiosInstance.post("/payment/oceanpay/verify", { orderNumber });
+                    console.log(`[oceanpay] res: ${JSON.stringify(res, null, 4)}`);
                 } else if (sessionId) {
                     res = await axiosInstance.post("/payment/stripe/verify", { sessionId });
+                    console.log(`[stripe] res: ${JSON.stringify(res, null, 4)}`);
                 } else if (token) {
                     res = await axiosInstance.post("/payment/paypal/verify", { orderId: token });
+                    console.log(`[paypal] res: ${JSON.stringify(res, null, 4)}`);
                 }
 
                 setOrderData(res?.data?.data);
+                
             } catch (err: any) {
                 console.error(err);
-                toast.error("Payment verification failed");
+                toast.error(err.message || "Payment verification failed");
+                // redirect to home
+                setTimeout(() => window.location.replace("/cancel"), 3000);
             } finally {
                 setLoading(false);
             }
@@ -84,9 +90,7 @@ export default function SuccessPage() {
         );
     }
 
-    console.log({
-        orderData
-    })
+    console.log(`orderData: ${JSON.stringify(orderData, null, 4)}`);
 
     const { session, order, shipping } = orderData;
 

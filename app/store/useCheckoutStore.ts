@@ -60,7 +60,7 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
                     sku: i.sku
                 })),
                 shipping: form.shipping,
-                successUrl: form.provider === "oceanPayment" ? `${tenantDomain}/ocean-payment-success` : `${tenantDomain}/success`,
+                successUrl: `${tenantDomain}/success`,
                 cancelUrl: `${tenantDomain}/cancel`
             };
 
@@ -102,7 +102,7 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
             }
 
         } catch (err: any) {
-            console.error(err.message || err);
+            console.error("CHECKOUT ERROR: ", err.message || err);
             toast.error(err.message || "Checkout failed");
         } finally {
             set({ isLoading: false });
