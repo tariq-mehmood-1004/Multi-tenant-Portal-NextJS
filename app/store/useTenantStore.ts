@@ -1,11 +1,197 @@
+import toast from 'react-hot-toast';
 import {create} from 'zustand';
+import axiosInstance from '../utils/axiosInstance';
+
+
+export interface StoreResponse {
+    id: number;
+    platform: string;
+    storeName: string;
+    storeUrl: string;
+    accessToken: string;
+    apiKey: string;
+    apiSecret: string;
+    isActive: boolean;
+};
+
+export interface MigrationJobResponse {
+    id: string;
+    sourcePlatform: string;
+    targetPlatform: string;
+    tables: string[];
+    mode: string;    // full, partial/delta
+    status: string; // pending | running | completed | failed
+};
+
+export interface Stores {
+    platform: string;
+    storeName: string;
+    storeUrl: string;
+    accessToken: string;
+    apiKey: string;
+    apiSecret: string;
+    isActive: boolean;
+};
 
 interface TenantState {
     domain: string;
     setDomain: (domain: string) => void;
+
+    isAddingStore: boolean;
+    addNewStore: (store: Stores) => void;
+
+    isFetchingStores: boolean;
+    stores: StoreResponse[];
+    fetchStores: () => void;
+
+    isDeletingStore: boolean;
+    deleteStore: (id: number) => void;
+
+    isUpdatingStore: boolean;
+    updateStore: (store: StoreResponse) => void;
 }
 
-export const useTenantStore = create<TenantState>((set) => ({
+export const useTenantStore = create<TenantState>((set, get) => ({
     domain: typeof window !== 'undefined' ? window.location.origin : '',
+    isFetchingStores: false,
+    isAddingStore: false,
+    isDeletingStore: false,
+    isUpdatingStore: false,
+    stores: [],
+
     setDomain: (domain) => set({ domain }),
+
+    addNewStore: async (store) => {
+        
+        set({ isAddingStore: true });
+
+        try {
+
+            // check fields are not empty
+            if (!store.platform || !store.storeName || !store.storeUrl || !store.accessToken || !store.apiKey || !store.apiSecret) {
+                toast.error('Please fill in all fields');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { statusText } = await axiosInstance.post(
+                `/swiftify-migrator/stores`,
+                store,
+                { headers }
+            );
+
+            console.log(`statusText: ${statusText}`);
+            
+            if (statusText === 'Created') {
+                toast.success('Store added successfully');
+                get().fetchStores();
+            }
+            
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to add store");
+        } finally {
+            set({ isAddingStore: false });
+        }
+    },
+    
+    updateStore: async (store) => {
+        
+        set({ isUpdatingStore: true });
+
+        try {
+
+            // check fields are not empty
+            if (!store.platform || !store.storeName || !store.storeUrl || !store.accessToken || !store.apiKey || !store.apiSecret) {
+                toast.error('Please fill in all fields');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { statusText } = await axiosInstance.put(
+                `/swiftify-migrator/stores?id=${store.id}`,
+                store,
+                { headers }
+            );
+
+            console.log(`statusText: ${statusText}`);
+            
+            if (statusText === 'OK') {
+                toast.success('Store updated successfully');
+                get().fetchStores();
+            }
+            
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to add store");
+        } finally {
+            set({ isUpdatingStore: false });
+        }
+    },
+
+    fetchStores: async () => {
+        set({ isFetchingStores: true });
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { data } = await axiosInstance.get(`/swiftify-migrator/stores`, { headers });
+            
+            set({
+                stores: data.data?.metadata || [],
+                isFetchingStores: false
+            });
+
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to fetch stores");
+        } finally {
+            set({ isFetchingStores: false });
+        }
+    },
+
+    deleteStore: async (id) => {
+        set({ isDeletingStore: true });
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { statusText } = await axiosInstance.delete(`/swiftify-migrator/stores/?id=${id}`, { headers });
+            console.log(`statusText: ${statusText}`);
+
+            if (statusText === 'OK') {
+                toast.success('Store deleted successfully');
+
+                const stores = useTenantStore.getState().stores.filter(s => s.id !== id);
+                useTenantStore.setState({ stores });
+
+                // reload the page
+                window.location.reload();
+            }
+            
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to delete store");
+        } finally {
+            set({ isDeletingStore: false });
+        }
+    }
 }));
