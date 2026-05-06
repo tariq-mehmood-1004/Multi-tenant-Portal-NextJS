@@ -63,6 +63,15 @@ const THeader = () => {
 
                 {/* RIGHT - Actions */}
                 <div className="flex items-center gap-3 relative">
+                    
+                    {/* Button - Migrator */}
+                    <Button
+                        variant="outline"
+                        onClick={() => router.push("/swiftify-migrator")}
+                        className="text-sm font-medium text-gray-500 hover:text-gray-600"
+                    >
+                        SwiftifY Migrator
+                    </Button>
 
                     <Button variant="outline" onClick={goCart} isDisabled={items.length === 0} className="relative w-10 h-10 p-0 flex items-center justify-center rounded-full border-gray-300 hover:bg-gray-100">
                         <ShoppingCart size={18} className="inline mb-1" />{" "}

@@ -5,6 +5,7 @@ import { useCartStore } from "../store/useCartStore";
 import { useProductStore } from "../store/useProductsStore";
 import { useEffect, useState } from "react";
 
+
 export default function HomePage() {
     const { products, isLoading, get_products } = useProductStore();
     const { addToCart } = useCartStore();

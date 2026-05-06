@@ -17,6 +17,7 @@ export const useNotificationstore = create<PropState>((set) => ({
     isNotificationLoading: false,
 
     fetchNotifications: async (params = { search: "", page: 1 }) => {
+        
         try {
             set({ isNotificationLoading: true });
 
