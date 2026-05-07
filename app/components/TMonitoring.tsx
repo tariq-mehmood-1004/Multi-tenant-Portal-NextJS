@@ -19,7 +19,7 @@ const TMonitoring = ({ jobs }: { jobs: MigrationJobResponse[] }) => {
               </div>
 
 
-              <div className="w-full">
+              <div className="w-full overflow-x-auto">
 
                   <table className="bg-white min-w-full overflow-hidden rounded-lg divide-y divide-gray-200">
                       <thead className='bg-zinc-200'>
