@@ -182,12 +182,14 @@ export default function TAddStoreModal({ store = null, className }: { store?: an
               {/* Active Toggle */}
               <div className="mt-2 w-fit">
                 <Switch isSelected={form.isActive} onChange={(val) => handleChange("isActive", val)} className="flex items-center space-x-2">
-                  <Switch.Content>
+                  <Switch.Content className={`
+                    ${form.isActive ? "" : "line-through"}
+                    `}>
                     <Label>Active Store</Label>
                   </Switch.Content>
 
                   <Switch.Control className="bg-slate-200">
-                    <Switch.Thumb />
+                    <Switch.Thumb className="bg-blue-600" />
                   </Switch.Control>
                 </Switch>
               </div>

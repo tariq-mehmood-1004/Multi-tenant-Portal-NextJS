@@ -1,24 +1,41 @@
 "use client";
 
-import { Bell, Loader, ShoppingCart, X } from "lucide-react";
+import { Bell, DotIcon, LayoutDashboard, Loader, ShoppingCart, User, X } from "lucide-react";
 import { Button } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "../store/useCartStore";
 import { useEffect, useState } from "react";
 import { useNotificationstore } from "../store/use-notifications-store";
+import { useAuthStore } from "../store/use-auth-store";
+import {
+    Show,
+    SignInButton,
+    SignOutButton,
+    SignUpButton,
+    UserButton,
+} from '@clerk/nextjs';
 
 
 const THeader = () => {
     const router = useRouter();
     const { items } = useCartStore();
-    const { 
+    const {
         notificationsData,
         fetchNotifications,
         isNotificationLoading
     } = useNotificationstore();
 
+    const {
+        fetchAuth,
+        isAuthLoading
+    } = useAuthStore();
+
     const [tenantDomain, setTenantDomain] = useState<string>("");
     const [notificationModalOpen, setNotificationModalOpen] = useState<boolean>(false);
+
+    useEffect(() => {
+        fetchAuth();
+    }, []);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -63,7 +80,7 @@ const THeader = () => {
 
                 {/* RIGHT - Actions */}
                 <div className="flex items-center gap-3 relative">
-                    
+
                     {/* Button - Migrator */}
                     <Button
                         variant="outline"
@@ -117,6 +134,40 @@ const THeader = () => {
                                     ))}
                                 </ul>
                             </div>
+                        </div>
+                    )}
+
+                    {isAuthLoading ? (
+                        <Loader className="animate-spin" />
+                    ) : (
+                        <div className="flex items-center gap-3">
+
+                            <Show when="signed-out">
+                                <div className="flex items-center gap-3">
+                                    <SignInButton mode="modal">
+                                        <Button className="rounded-lg px-3 py-1 border-0 dark:border-[#373737] dark:hover:bg-[#373737]/80 transition ease-in duration-200">Login</Button>
+                                    </SignInButton>
+                                    <SignUpButton mode="modal">
+                                        <Button className="bg-gray-100 hover:bg-gray-300 rounded-lg px-3 py-1 dark:bg-[#212121] dark:hover:bg-[#212121]/80 transition ease-in duration-200">
+                                            Sign Up
+                                        </Button>
+                                    </SignUpButton>
+                                </div>
+                            </Show>
+
+                            <Show when="signed-in">
+                                <SignInButton mode="modal">
+                                    <UserButton>
+                                            <UserButton.MenuItems>
+                                                <UserButton.Action
+                                                    label="Profile"
+                                                    labelIcon={<User className="w-4 h-4" />}
+                                                    onClick={() => router.push("/user-profile")}
+                                                />
+                                            </UserButton.MenuItems>
+                                    </UserButton>
+                                </SignInButton>
+                            </Show>
                         </div>
                     )}
 

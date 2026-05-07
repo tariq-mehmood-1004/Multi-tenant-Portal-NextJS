@@ -1,9 +1,15 @@
 import { Button, Tooltip } from '@heroui/react'
 import { ArrowRight, Trash } from 'lucide-react'
 import React from 'react'
-import { MigrationJobResponse } from '../store/useTenantStore'
+import { MigrationJobResponse, useTenantStore } from '../store/useTenantStore'
 
 const TMonitoring = ({ jobs }: { jobs: MigrationJobResponse[] }) => {
+
+    const { 
+        isMigrationJobDeleting,
+        deleteMigrationJob
+    } = useTenantStore();
+    
   return (
       <div className="flex flex-col bg-blue-100/60 rounded-lg py-4 px-3 gap-4">
 
@@ -47,9 +53,9 @@ const TMonitoring = ({ jobs }: { jobs: MigrationJobResponse[] }) => {
                                       <div className="text-sm text-gray-900">{job.id}</div>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap flex items-center">
-                                      <span>{job.sourcePlatform}</span>
+                                      <span>{job.sourcePlatform.platform}</span>
                                       <ArrowRight className="w-4 h-4 inline-block" />
-                                      <span>{job.targetPlatform}</span>
+                                      <span>{job.targetPlatform.platform}</span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                       <div className="text-sm text-gray-900">{job.tables.join(", ")}</div>
@@ -63,7 +69,7 @@ const TMonitoring = ({ jobs }: { jobs: MigrationJobResponse[] }) => {
                                         ${job.status === "completed"
                                           ? "text-green-500 border-green-500 bg-green-100"
                                           : job.status === "failed" ? "text-red-500 border-red-500 bg-red-100"
-                                              : job.status === "running" ? "text-yellow-500 border-yellow-500 bg-yellow-100"
+                                              : job.status === "running" ? "text-blue-500 border-blue-500 bg-blue-100"
                                                   : "text-gray-500 border-gray-500 bg-gray-100"
                                             }
                                         `}>
@@ -71,7 +77,7 @@ const TMonitoring = ({ jobs }: { jobs: MigrationJobResponse[] }) => {
                                       </span>
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap flex gap-2">
-                                      <Button onPress={() => { }} className="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-300">
+                                      <Button isDisabled={isMigrationJobDeleting} onPress={() => deleteMigrationJob(job.id)} className="w-8 h-8 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all duration-300">
                                           <Trash className="w-4 h-4" />
                                       </Button>
                                   </td>

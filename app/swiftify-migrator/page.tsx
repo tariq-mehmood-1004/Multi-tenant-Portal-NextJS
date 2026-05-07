@@ -13,32 +13,6 @@ const Page = () => {
   const [migrating, setMigrating] = useState(false);
   const [sourceStoreId, setSourceStoreId] = useState<string>("");
   const [targetStoreId, setTargetStoreId] = useState<string>("");
-  const [jobs, setJobs] = useState<MigrationJobResponse[]>([
-    {
-      id: "XAS-1q23S",
-      sourcePlatform: "Shopify",
-      targetPlatform: "WooCommerce",
-      tables: ["products", "orders"],
-      mode: "full",
-      status: "failed",
-    },
-    {
-      id: "XAS-1q23Ss",
-      sourcePlatform: "Shopify",
-      targetPlatform: "WooCommerce",
-      tables: ["products", "orders", "customers"],
-      mode: "delta",
-      status: "completed",
-    },
-    {
-      id: "XAS-1q23asS",
-      sourcePlatform: "Shopify",
-      targetPlatform: "WooCommerce",
-      tables: ["products"],
-      mode: "full",
-      status: "running",
-    },
-  ]);
 
   const {
     isFetchingStores,
@@ -46,10 +20,14 @@ const Page = () => {
     fetchStores,
     deleteStore,
     isDeletingStore,
+    isMigrationJobsLoading,
+    migrationJobs: jobs,
+    fetchMigrationJobs,
   } = useTenantStore();
 
   useEffect(() => {
     fetchStores();
+    fetchMigrationJobs();
   }, []);
 
   useEffect(() => {
@@ -180,7 +158,7 @@ const Page = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900">
                                 <Tooltip delay={0}>
-                                  <Button variant="tertiary">
+                                  <Button variant="tertiary" className={"bg-transparent"}>
                                     {store.storeUrl.slice(0, 20)}
                                   </Button>
                                   <Tooltip.Content>
@@ -383,7 +361,13 @@ const Page = () => {
           </div>
 
           {/* Monitoring... */}
-          <TMonitoring jobs={jobs} />
+          {isMigrationJobsLoading ? (
+            <div className="flex items-center justify-center">
+              <Loader className="animate-spin" />
+            </div>
+          ) : (
+            <TMonitoring jobs={jobs} />
+          )}
         </div>
       </div>
 

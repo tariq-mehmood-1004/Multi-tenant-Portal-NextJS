@@ -16,8 +16,12 @@ export interface StoreResponse {
 
 export interface MigrationJobResponse {
     id: string;
-    sourcePlatform: string;
-    targetPlatform: string;
+    sourcePlatform: {
+        platform: string;
+    };
+    targetPlatform: {
+        platform: string;
+    };
     tables: string[];
     mode: string;    // full, partial/delta
     status: string; // pending | running | completed | failed
@@ -49,6 +53,13 @@ interface TenantState {
 
     isUpdatingStore: boolean;
     updateStore: (store: StoreResponse) => void;
+
+    isMigrationJobsLoading: boolean;
+    migrationJobs: MigrationJobResponse[];
+    fetchMigrationJobs: () => void;
+
+    isMigrationJobDeleting: boolean;
+    deleteMigrationJob: (id: string) => void;
 }
 
 export const useTenantStore = create<TenantState>((set, get) => ({
@@ -57,7 +68,10 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     isAddingStore: false,
     isDeletingStore: false,
     isUpdatingStore: false,
+    isMigrationJobsLoading: false,
+    isMigrationJobDeleting: false,
     stores: [],
+    migrationJobs: [],
 
     setDomain: (domain) => set({ domain }),
 
@@ -193,5 +207,57 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         } finally {
             set({ isDeletingStore: false });
         }
-    }
+    },
+
+    fetchMigrationJobs: async () => {
+        set({ isMigrationJobsLoading: true });
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { data } = await axiosInstance.get(`/swiftify-migrator/migration-jobs`, { headers });
+
+            set({
+                migrationJobs: data.data?.metadata || [],
+                isMigrationJobsLoading: false
+            });
+
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to fetch migration jobs");
+        } finally {
+            set({ isMigrationJobsLoading: false });
+        }
+    },
+
+
+    deleteMigrationJob: async (id) => {
+        set({ isMigrationJobDeleting: true });
+
+        try {
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { statusText } = await axiosInstance.delete(`/swiftify-migrator/migration-jobs?id=${id}`, { headers });
+            console.log(`statusText: ${statusText}`);
+
+            toast.success('Migration deleted successfully');
+
+            const stores = useTenantStore.getState().migrationJobs.filter(s => s.id !== id);
+            useTenantStore.setState({ migrationJobs: stores });
+
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message || "Failed to delete migration job");
+        } finally {
+            set({ isMigrationJobDeleting: false });
+        }
+    },
 }));
