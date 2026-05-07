@@ -4,15 +4,24 @@ import { Button, Tooltip } from '@heroui/react';
 import { Loader, Trash, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import TAddStoreModal from './../../components/TAddStoresModal';
-import { MigrationJobResponse, useTenantStore } from '../store/useTenantStore';
+import { MODE, useTenantStore } from '../store/useTenantStore';
 import TMonitoring from '../components/TMonitoring';
+import toast from 'react-hot-toast';
 
 
 const Page = () => {
 
-  const [migrating, setMigrating] = useState(false);
   const [sourceStoreId, setSourceStoreId] = useState<string>("");
   const [targetStoreId, setTargetStoreId] = useState<string>("");
+  
+  const [mode, setMode] = useState<MODE>("full");
+
+  const [tables, setTables] = useState<string[]>([]);
+
+  const [productOptions, setProductOptions] = useState({
+    peptide: false,
+    nonPeptide: false,
+  });
 
   const {
     isFetchingStores,
@@ -23,6 +32,8 @@ const Page = () => {
     isMigrationJobsLoading,
     migrationJobs: jobs,
     fetchMigrationJobs,
+    runMigration,
+    isMigrationJobRunning,
   } = useTenantStore();
 
   useEffect(() => {
@@ -31,25 +42,139 @@ const Page = () => {
   }, []);
 
   useEffect(() => {
-    if (migrating) {
+    if (isMigrationJobRunning) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
     }
 
     return () => {
       document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "auto";
     };
-  }, [migrating]);
+  }, [isMigrationJobRunning]);
 
-  const handleRunMigration = () => {
-    setMigrating(true);
+  /**
+ * HANDLE TABLE TOGGLE
+ */
+  const handleTableToggle = (table: string) => {
+    setTables((prev) => {
+      if (prev.includes(table)) {
+        return prev.filter((t) => t !== table);
+      }
+
+      return [...prev, table];
+    });
+  };
+
+  /**
+   * HANDLE PRODUCT TOGGLE
+   */
+  const handleProductsToggle = (checked: boolean) => {
+    if (checked) {
+      setTables((prev) => {
+        const next = [...prev];
+
+        if (!next.includes("products")) {
+          next.push("products");
+        }
+
+        return next;
+      });
+    } else {
+      setTables((prev) =>
+        prev.filter(
+          (t) =>
+            t !== "products" &&
+            t !== "products_peptide" &&
+            t !== "products_non_peptide"
+        )
+      );
+
+      setProductOptions({
+        peptide: false,
+        nonPeptide: false,
+      });
+    }
+  };
+
+  /**
+   * HANDLE PRODUCT CHILD OPTIONS
+   */
+  const handleProductChildToggle = (
+    key: "peptide" | "nonPeptide",
+    checked: boolean
+  ) => {
+    setProductOptions((prev) => ({
+      ...prev,
+      [key]: checked,
+    }));
+
+    setTables((prev) => {
+      let next = [...prev];
+
+      // ensure products parent exists
+      if (!next.includes("products")) {
+        next.push("products");
+      }
+
+      const tableKey =
+        key === "peptide"
+          ? "products_peptide"
+          : "products_non_peptide";
+
+      if (checked) {
+        if (!next.includes(tableKey)) {
+          next.push(tableKey);
+        }
+      } else {
+        next = next.filter((t) => t !== tableKey);
+      }
+
+      return next;
+    });
+  };
+
+  /**
+   * RUN MIGRATION
+   */
+  const handleRunMigration = async () => {
+    if (!sourceStoreId || !targetStoreId) {
+      toast.error("Please select source and target stores");
+      return;
+    }
+
+    if (sourceStoreId === targetStoreId) {
+      toast.error("Source and target store cannot be same");
+      return;
+    }
+
+    if (tables.length === 0) {
+      toast.error("Please select at least one table to migrate");
+      return;
+    }
+
+    console.log({
+      sourceStoreId: Number(sourceStoreId),
+      targetStoreId: Number(targetStoreId),
+      mode,
+      tables,
+    });
+
+    await runMigration({
+      sourceStoreId: Number(sourceStoreId),
+      targetStoreId: Number(targetStoreId),
+      mode,
+      tables,
+    });
   };
 
   return (
     <>
 
-      {migrating && (
+      {isMigrationJobRunning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
 
           {/* Backdrop */}
@@ -81,9 +206,8 @@ const Page = () => {
 
             <div className="absolute top-4 right-4 flex justify-end">
               <Button
-                onClick={() => setMigrating(false)}
                 className="bg-transparent text-black px-2 py-1 rounded-full flex items-center justify-center w-6 h-6 hover:bg-gray-200 transition-all duration-300"
-              >
+                >
                 <X size={16} className="w-4 h-4" />
               </Button>
             </div>
@@ -217,16 +341,21 @@ const Page = () => {
                       <div className="mt-2">
                         <h1 className="text-sm font-bold text-zinc-900 mb-2">Select Table</h1>
 
-                        {/* Checkbox */}
+                        {/* Products */}
                         <div className="flex items-center bg-gray-100 rounded p-1 mb-1">
-                          <ul className="space-y-2">
+                          <ul className="space-y-2 w-full">
                             <li className="flex flex-col">
                               <div className="flex items-center">
                                 <input
                                   id="checkbox-products"
                                   type="checkbox"
+                                  checked={tables.includes("products")}
+                                  onChange={(e) =>
+                                    handleProductsToggle(e.target.checked)
+                                  }
                                   className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
                                 />
+
                                 <label
                                   htmlFor="checkbox-products"
                                   className="ml-2 text-sm font-medium text-gray-900"
@@ -235,47 +364,73 @@ const Page = () => {
                                 </label>
                               </div>
 
-                              <ul className="space-y-2 ml-5">
-                                <li className="flex flex-col">
-                                  <div className="flex items-center">
-                                    <input
-                                      id="checkbox-peptide"
-                                      type="checkbox"
-                                      className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
-                                    />
-                                    <label
-                                      htmlFor="checkbox-peptide"
-                                      className="ml-2 text-sm font-medium text-gray-900"
-                                    >
-                                      Peptide
-                                    </label>
-                                  </div>
+                              {tables.includes("products") && (
+                                <ul className="space-y-2 ml-5 mt-2">
+                                  <li className="flex flex-col gap-2">
 
-                                  <div className="flex items-center">
-                                    <input
-                                      id="checkbox-non-peptide"
-                                      type="checkbox"
-                                      className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
-                                    />
-                                    <label
-                                      htmlFor="checkbox-non-peptide"
-                                      className="ml-2 text-sm font-medium text-gray-900"
-                                    >
-                                      Non-Peptide
-                                    </label>
-                                  </div>
-                                </li>
-                              </ul>
+                                    <div className="flex items-center">
+                                      <input
+                                        id="checkbox-peptide"
+                                        type="checkbox"
+                                        checked={productOptions.peptide}
+                                        onChange={(e) =>
+                                          handleProductChildToggle(
+                                            "peptide",
+                                            e.target.checked
+                                          )
+                                        }
+                                        className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+                                      />
+
+                                      <label
+                                        htmlFor="checkbox-peptide"
+                                        className="ml-2 text-sm font-medium text-gray-900"
+                                      >
+                                        Peptide
+                                      </label>
+                                    </div>
+
+                                    <div className="flex items-center">
+                                      <input
+                                        id="checkbox-non-peptide"
+                                        type="checkbox"
+                                        checked={productOptions.nonPeptide}
+                                        onChange={(e) =>
+                                          handleProductChildToggle(
+                                            "nonPeptide",
+                                            e.target.checked
+                                          )
+                                        }
+                                        className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
+                                      />
+
+                                      <label
+                                        htmlFor="checkbox-non-peptide"
+                                        className="ml-2 text-sm font-medium text-gray-900"
+                                      >
+                                        Non-Peptide
+                                      </label>
+                                    </div>
+
+                                  </li>
+                                </ul>
+                              )}
                             </li>
                           </ul>
                         </div>
 
+                        {/* Orders */}
                         <div className="flex items-center bg-gray-100 rounded p-1 mb-1">
                           <input
                             id="checkbox-orders"
                             type="checkbox"
+                            checked={tables.includes("orders")}
+                            onChange={(e) =>
+                              handleTableToggle("orders")
+                            }
                             className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
                           />
+
                           <label
                             htmlFor="checkbox-orders"
                             className="ml-2 text-sm font-medium text-gray-900"
@@ -284,12 +439,18 @@ const Page = () => {
                           </label>
                         </div>
 
+                        {/* Customers */}
                         <div className="flex items-center bg-gray-100 rounded p-1 mb-1">
                           <input
                             id="checkbox-customers"
                             type="checkbox"
+                            checked={tables.includes("customers")}
+                            onChange={(e) =>
+                              handleTableToggle("customers")
+                            }
                             className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
                           />
+
                           <label
                             htmlFor="checkbox-customers"
                             className="ml-2 text-sm font-medium text-gray-900"
@@ -298,12 +459,18 @@ const Page = () => {
                           </label>
                         </div>
 
+                        {/* Inventory */}
                         <div className="flex items-center bg-gray-100 rounded p-1 mb-1">
                           <input
                             id="checkbox-inventory"
                             type="checkbox"
+                            checked={tables.includes("inventory")}
+                            onChange={(e) =>
+                              handleTableToggle("inventory")
+                            }
                             className="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500"
                           />
+
                           <label
                             htmlFor="checkbox-inventory"
                             className="ml-2 text-sm font-medium text-gray-900"
@@ -340,7 +507,10 @@ const Page = () => {
 
                       <div className='mt-2'>
                         <h1 className="text-sm font-bold text-zinc-900 mb-2">Mode</h1>
-                        <select className="block w-full rounded-md bg-gray-100 border py-2 px-3 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                        <select
+                          value={mode}
+                          onChange={(e) => setMode(e.target.value as MODE)}
+                          className="block w-full rounded-md bg-gray-100 border py-2 px-3 focus:outline-none focus:ring-indigo-500 sm:text-sm">
                           <option value={"full"}>Full</option>
                           <option value={"delta"}>Partial</option>
                         </select>

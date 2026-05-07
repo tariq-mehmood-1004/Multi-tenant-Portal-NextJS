@@ -37,6 +37,14 @@ export interface Stores {
     isActive: boolean;
 };
 
+export type MODE = 'full' | 'delta';
+export interface MigrationJobs {
+    sourceStoreId: number;
+    targetStoreId: number;
+    tables: string[];
+    mode: MODE;
+}
+
 interface TenantState {
     domain: string;
     setDomain: (domain: string) => void;
@@ -60,6 +68,9 @@ interface TenantState {
 
     isMigrationJobDeleting: boolean;
     deleteMigrationJob: (id: string) => void;
+
+    isMigrationJobRunning: boolean;
+    runMigration: (migration: MigrationJobs) => Promise<void>;
 }
 
 export const useTenantStore = create<TenantState>((set, get) => ({
@@ -68,12 +79,52 @@ export const useTenantStore = create<TenantState>((set, get) => ({
     isAddingStore: false,
     isDeletingStore: false,
     isUpdatingStore: false,
+    isMigrationJobRunning: false,
     isMigrationJobsLoading: false,
     isMigrationJobDeleting: false,
     stores: [],
     migrationJobs: [],
 
     setDomain: (domain) => set({ domain }),
+
+    runMigration: async (migration) => {
+
+        set({ isMigrationJobRunning: true });
+
+        try {
+
+            // check fields are not empty
+            if (!migration.sourceStoreId || !migration.targetStoreId || !migration.tables || !migration.mode) {
+                toast.error('Please fill in all fields');
+                return;
+            }
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'x-tenant-domain': typeof window !== 'undefined' ? window.location.origin : '',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_TOKEN_KEY || ''}`
+            };
+
+            const { statusText } = await axiosInstance.post(
+                `/swiftify-migrator/migration/run`,
+                migration,
+                { headers }
+            );
+
+            console.log(`statusText: ${statusText}`);
+
+            if (statusText === 'Created') {
+                toast.success('Migration started successfully');
+                get().fetchMigrationJobs();
+            }
+
+        } catch (err: any) {
+            console.error(err.message || err);
+            toast.error(err.message);
+        } finally {
+            set({ isMigrationJobRunning: false });
+        }
+    },
 
     addNewStore: async (store) => {
         
@@ -233,7 +284,6 @@ export const useTenantStore = create<TenantState>((set, get) => ({
             set({ isMigrationJobsLoading: false });
         }
     },
-
 
     deleteMigrationJob: async (id) => {
         set({ isMigrationJobDeleting: true });
