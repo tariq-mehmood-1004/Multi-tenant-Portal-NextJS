@@ -203,14 +203,6 @@ const Page = () => {
             <p className="text-sm text-gray-600 mt-2">
               Please wait while the migration is running...
             </p>
-
-            <div className="absolute top-4 right-4 flex justify-end">
-              <Button
-                className="bg-transparent text-black px-2 py-1 rounded-full flex items-center justify-center w-6 h-6 hover:bg-gray-200 transition-all duration-300"
-                >
-                <X size={16} className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
         </div>
       )}
