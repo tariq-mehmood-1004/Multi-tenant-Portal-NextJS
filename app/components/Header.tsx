@@ -57,7 +57,13 @@ const THeader = () => {
     const goCart = () => {
         router.push("/cart");
     };
+    
+    const notificationLength = notificationsData?.metadata?.length ?? 0;
 
+    const notificationCount =
+        notificationLength > 99
+            ? "99+"
+            : notificationLength;
     return (
         <header className="w-full bg-white border-b sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -101,8 +107,8 @@ const THeader = () => {
                         {isNotificationLoading ? <Loader className="animate-spin" /> : (
                             <>
                                 <Bell size={18} className="inline mb-1" />{" "}
-                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                    {notificationsData?.metadata.length || 0}
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center">
+                                    {notificationCount}
                                 </span>
                             </>
                         )}
