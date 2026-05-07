@@ -115,7 +115,6 @@ export const useTenantStore = create<TenantState>((set, get) => ({
 
             if (statusText === 'Created') {
                 toast.success('Migration started successfully');
-                get().fetchMigrationJobs();
             }
 
         } catch (err: any) {
@@ -124,6 +123,8 @@ export const useTenantStore = create<TenantState>((set, get) => ({
         } finally {
             set({ isMigrationJobRunning: false });
         }
+
+        get().fetchMigrationJobs();
     },
 
     addNewStore: async (store) => {
