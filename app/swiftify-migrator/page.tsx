@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Tooltip } from '@heroui/react';
-import { Loader, Trash, X } from 'lucide-react';
+import { Loader, Trash } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import TAddStoreModal from './../../components/TAddStoresModal';
 import { MODE, useTenantStore } from '../store/useTenantStore';
@@ -73,9 +73,21 @@ const Page = () => {
    * HANDLE PRODUCT TOGGLE
    */
   const handleProductsToggle = (checked: boolean) => {
+
     if (checked) {
+
+      setProductOptions({
+        peptide: false,
+        nonPeptide: false,
+      });
+
       setTables((prev) => {
-        const next = [...prev];
+
+        const next = prev.filter(
+          (t) =>
+            t !== "products:peptide" &&
+            t !== "products:non_peptide"
+        );
 
         if (!next.includes("products")) {
           next.push("products");
@@ -83,13 +95,15 @@ const Page = () => {
 
         return next;
       });
+
     } else {
+
       setTables((prev) =>
         prev.filter(
           (t) =>
             t !== "products" &&
-            t !== "products_peptide" &&
-            t !== "products_non_peptide"
+            t !== "products:peptide" &&
+            t !== "products:non_peptide"
         )
       );
 
@@ -107,30 +121,39 @@ const Page = () => {
     key: "peptide" | "nonPeptide",
     checked: boolean
   ) => {
+
+    const tableKey =
+      key === "peptide"
+        ? "products:peptide"
+        : "products:non_peptide";
+
     setProductOptions((prev) => ({
       ...prev,
       [key]: checked,
     }));
 
     setTables((prev) => {
-      let next = [...prev];
 
-      // ensure products parent exists
-      if (!next.includes("products")) {
-        next.push("products");
-      }
-
-      const tableKey =
-        key === "peptide"
-          ? "products_peptide"
-          : "products_non_peptide";
+      let next = prev.filter((t) => t !== "products");
 
       if (checked) {
+
         if (!next.includes(tableKey)) {
           next.push(tableKey);
         }
+
       } else {
+
         next = next.filter((t) => t !== tableKey);
+
+        const hasAnyChild =
+          next.includes("products:peptide") ||
+          next.includes("products:non_peptide");
+
+        // if no child selected, fallback to products
+        if (!hasAnyChild) {
+          next.push("products");
+        }
       }
 
       return next;
@@ -170,6 +193,11 @@ const Page = () => {
       tables,
     });
   };
+
+  const isProductsSelected =
+    tables.includes("products") ||
+    tables.includes("products:peptide") ||
+    tables.includes("products:non_peptide");
 
   return (
     <>
@@ -341,7 +369,11 @@ const Page = () => {
                                 <input
                                   id="checkbox-products"
                                   type="checkbox"
-                                  checked={tables.includes("products")}
+                                  checked={
+                                    tables.includes("products") ||
+                                    tables.includes("products:peptide") ||
+                                    tables.includes("products:non_peptide")
+                                  }
                                   onChange={(e) =>
                                     handleProductsToggle(e.target.checked)
                                   }
@@ -356,7 +388,7 @@ const Page = () => {
                                 </label>
                               </div>
 
-                              {tables.includes("products") && (
+                              {isProductsSelected && (
                                 <ul className="space-y-2 ml-5 mt-2">
                                   <li className="flex flex-col gap-2">
 
