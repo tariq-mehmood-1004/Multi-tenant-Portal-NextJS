@@ -60,7 +60,10 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
                     sku: i.sku
                 })),
                 shipping: form.shipping,
-                successUrl: `${tenantDomain}/success`,
+                successUrl:
+                    form.provider === "oceanPayment"
+                        ? `${tenantDomain}/ocean-payment-success`
+                        : `${tenantDomain}/success`,
                 cancelUrl: `${tenantDomain}/cancel`
             };
 
