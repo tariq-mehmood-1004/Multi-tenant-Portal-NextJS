@@ -93,15 +93,22 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
             console.log(`CHECKOUT DATA:`, data);
             console.log(`CHECKOUT status:`, status);
 
-            const url = data?.data?.metadata?.checkout_url;
+            const metadata = data?.data?.metadata;
+            
+            console.log(`CHECKOUT METADATA:`, JSON.stringify(metadata, null, 4));
+
+            const url = metadata?.checkout_url;
+            console.log(`CHECKOUT URL:`, url);
 
             if (!url) throw new Error("Checkout URL missing");
 
             if (status === 200) {
                 toast.success(`You are being redirected to the checkout page on ${form.provider}...`);
 
-                window.location.href = url;
+                window.open(url, "_blank", "noopener,noreferrer");
+
                 clearCart();
+
             }
 
         } catch (err: any) {
