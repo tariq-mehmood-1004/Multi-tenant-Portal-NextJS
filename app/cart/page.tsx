@@ -8,13 +8,11 @@ import { useState } from 'react';
 import { Trash } from 'lucide-react';
 import { SiDigitalocean, SiPaypal, SiStripe } from 'react-icons/si';
 import { BiArrowBack } from 'react-icons/bi';
-import { CURRENCIES } from '../types/types';
 
 const Cart = () => {
     const { items, removeFromCart } = useCartStore();
     const { checkout } = useCheckoutStore();
     const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
-    const [currency, setCurrency] = useState("USD");
 
     const [customer, setCustomer] = useState({
         firstName: '',
@@ -45,7 +43,6 @@ const Cart = () => {
             await checkout({
                 provider: method,
                 customerEmail: customer.email,
-                currency: currency,
                 shipping: {
                     name: `${customer.firstName} ${customer.lastName}`,
                     phone: customer.phone,
@@ -173,42 +170,13 @@ const Cart = () => {
                                     className="border rounded-md px-3 py-2"
                                 />
 
-                                {/* <input
+                                <input
                                     type="text"
                                     placeholder="Country"
                                     value={shipping.country}
                                     onChange={(e) => setShipping({ ...shipping, country: e.target.value })}
                                     className="border rounded-md px-3 py-2"
-                                /> */}
-
-                                <div>
-                                    <select
-                                        value={shipping.country}
-                                        onChange={(e) => {
-                                            const selectedCurrency = CURRENCIES.find(
-                                                (c) => c.code === e.target.value
-                                            );
-
-                                            setCurrency(e.target.value);
-
-                                            setShipping((prev) => ({
-                                                ...prev,
-                                                country: selectedCurrency?.country || ""
-                                            }));
-                                        }}
-                                        className="border rounded-md px-3 py-2 w-full"
-                                    >
-                                        <option value="" disabled>
-                                            Select Country
-                                        </option>
-
-                                        {CURRENCIES.map((c) => (
-                                            <option key={c.code} value={c.code}>
-                                                {c.country} ({c.code})
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                                />
                             </div>
                         </div>
                     </div>

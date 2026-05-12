@@ -22,7 +22,6 @@ interface CheckoutItemForm {
     provider?: string;
     customerEmail: string;
     shipping: ShippingDetails;
-    currency?: string;
 }
 
 interface CheckoutState {
@@ -49,7 +48,7 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
 
             const payload = {
                 customerEmail: form.customerEmail,
-                currency: form.currency || "USD",
+                currency: "USD",
                 items: items.map(i => ({
                     productId: i.id,
                     name: i.name,
