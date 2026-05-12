@@ -22,6 +22,7 @@ interface CheckoutItemForm {
     provider?: string;
     customerEmail: string;
     shipping: ShippingDetails;
+    currency?: string;
 }
 
 interface CheckoutState {
@@ -48,7 +49,7 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
 
             const payload = {
                 customerEmail: form.customerEmail,
-                currency: "USD",
+                currency: form.currency || "USD",
                 items: items.map(i => ({
                     productId: i.id,
                     name: i.name,
@@ -100,14 +101,16 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
             const url = metadata?.checkout_url;
             console.log(`CHECKOUT URL:`, url);
 
+            
             if (!url) throw new Error("Checkout URL missing");
-
+            
             if (status === 200) {
                 toast.success(`You are being redirected to the checkout page on ${form.provider}...`);
-
+                
                 window.open(url, "_blank", "noopener,noreferrer");
-
-                clearCart();
+                // window.open(url, 'popUpWindow', 'height=700,width=600,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
+                // window.location.href = url;
+                // clearCart();
 
             }
 
