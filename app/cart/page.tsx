@@ -183,7 +183,7 @@ const Cart = () => {
 
                                 <div>
                                     <select
-                                        value={currency}
+                                        value={shipping.country}
                                         onChange={(e) => {
                                             const selectedCurrency = CURRENCIES.find(
                                                 (c) => c.code === e.target.value
@@ -191,14 +191,17 @@ const Cart = () => {
 
                                             setCurrency(e.target.value);
 
-                                            setShipping({
-                                                ...shipping,
+                                            setShipping((prev) => ({
+                                                ...prev,
                                                 country: selectedCurrency?.country || ""
-                                            });
+                                            }));
                                         }}
                                         className="border rounded-md px-3 py-2 w-full"
-                                        >
-                                        <option value="" disabled>Select Country</option>
+                                    >
+                                        <option value="" disabled>
+                                            Select Country
+                                        </option>
+
                                         {CURRENCIES.map((c) => (
                                             <option key={c.code} value={c.code}>
                                                 {c.country} ({c.code})
