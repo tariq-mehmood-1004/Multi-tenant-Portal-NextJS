@@ -6,6 +6,7 @@ import axiosInstance from "../utils/axiosInstance";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import type { AxiosResponse, AxiosError } from "axios";
+import { ApiError } from "../types/types";
 
 interface Order {
     id: number;
@@ -86,9 +87,11 @@ export default function OceanSuccessPage() {
                 setData(res.data.data);
             } catch (err) {
                 toast.error("Payment verification failed");
-                const error = err as AxiosError<OceanErrorResponse>;
+                const error = err as ApiError<OceanErrorResponse>;
 
-                setErrorData(error.response?.data || null);
+                console.error(`[oceanpay] verification error:`, error);
+
+                setErrorData(error.data || null);
             } finally {
                 setLoading(false);
             }

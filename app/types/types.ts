@@ -66,3 +66,10 @@ export const CURRENCIES = [
     { code: "BRL", label: "Brazilian Real", country: "Brazil" },
     { code: "MXN", label: "Mexican Peso", country: "Mexico" },
 ];
+
+export interface ApiError<T = any> {
+    status: number;
+    code: string;
+    message: string;
+    data: T;
+}
