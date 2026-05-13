@@ -110,7 +110,6 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
                 // window.open(url, 'popUpWindow', 'height=700,width=600,left=100,top=100,resizable=yes,scrollbars=yes,toolbar=yes,menubar=no,location=no,directories=no, status=yes');
                 // window.location.href = url;
                 // clearCart();
-
             }
 
         } catch (err: any) {

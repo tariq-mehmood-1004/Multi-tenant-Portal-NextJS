@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import axiosInstance from "../utils/axiosInstance";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import type { AxiosResponse, AxiosError } from "axios";
 
 interface Order {
     id: number;
@@ -44,11 +45,30 @@ interface OceanVerifyResponse {
     shipping: Shipping;
 }
 
+interface OceanErrorResponse {
+    success: boolean;
+    payment_status: string;
+    payment_results: any;
+    payment_details: any;
+    payment_solutions: {
+        description: string;
+        solution: string;
+    } | null;
+    orderNumber: string;
+    amount: number;
+    currency: string;
+    account_details?: {
+        terminal: string;
+        account: string;
+    };
+};
+
 export default function OceanSuccessPage() {
     const searchParams = useSearchParams();
     const orderNumber = searchParams.get("orderNumber");
 
     const [data, setData] = useState<OceanVerifyResponse | null>(null);
+    const [errorData, setErrorData] = useState<OceanErrorResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -58,14 +78,17 @@ export default function OceanSuccessPage() {
                     throw new Error("Missing order number");
                 }
 
-                const res = await axiosInstance.post(
-                    "/payment/oceanpay/verify",
-                    { orderNumber }
-                );
+                const res: AxiosResponse<{ data: OceanVerifyResponse }> =
+                    await axiosInstance.post("/payment/oceanpay/verify", { orderNumber });
+
+                console.log(`[oceanpay] res: ${JSON.stringify(res, null, 4)}`);
 
                 setData(res.data.data);
             } catch (err) {
                 toast.error("Payment verification failed");
+                const error = err as AxiosError<OceanErrorResponse>;
+
+                setErrorData(error.response?.data || null);
             } finally {
                 setLoading(false);
             }
@@ -96,6 +119,10 @@ export default function OceanSuccessPage() {
                 >
                     Return to Shop
                 </Link>
+
+                <div className="mt-6 w-full max-w-3xl bg-white border rounded p-4 text-left text-sm">
+                    <pre className="whitespace-pre-wrap">{JSON.stringify(errorData, null, 4)}</pre>
+                </div>
             </div>
         );
     }

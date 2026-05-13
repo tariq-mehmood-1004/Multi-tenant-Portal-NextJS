@@ -10,7 +10,7 @@ import { SiDigitalocean, SiPaypal, SiStripe } from 'react-icons/si';
 import { BiArrowBack } from 'react-icons/bi';
 
 const Cart = () => {
-    const { items, removeFromCart } = useCartStore();
+    const { items, removeFromCart, updateQuantity } = useCartStore();
     const { checkout } = useCheckoutStore();
     const [loadingMethod, setLoadingMethod] = useState<string | null>(null);
 
@@ -212,9 +212,37 @@ const Cart = () => {
                                         <p className="text-sm text-black">{item.name}</p>
                                         <p className="text-sm text-red-500">{item.is_peptide ? "High risk product" : ""}</p>
                                         <p className="text-xs text-black">Size: {item.size}</p>
-                                        <p className="text-xs text-gray-500">
+
+                                        {/* QUANTITY CONTROLS */}
+                                        <div className="flex items-center gap-2 my-1">
+
+                                            <Button
+                                                onPress={() =>
+                                                    updateQuantity(item.name, Math.max(1, item.quantity - 1))
+                                                }
+                                                className="w-6 h-6 flex items-center justify-center rounded-full p-1 bg-blue-200 hover:bg-gray-300"
+                                            >
+                                                -
+                                            </Button>
+
+                                            <span className="text-xs font-medium">
+                                                {item.quantity}
+                                            </span>
+
+                                            <Button
+                                                onPress={() =>
+                                                    updateQuantity(item.name, item.quantity + 1)
+                                                }
+                                                className="w-6 h-6 flex items-center justify-center rounded-full p-1 bg-blue-200 hover:bg-gray-300"
+                                            >
+                                                +
+                                            </Button>
+
+                                        </div>
+
+                                        <div className="w-full text-right text-xs text-gray-500">
                                             {item.quantity} × ${item.price}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
 
